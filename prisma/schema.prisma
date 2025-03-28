@@ -1,14 +1,41 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlserver"
+  url      = env("VALIDATIONS_DB_URL")
+}
+
+model TB_Rutas {
+  ID_Ruta         Int            @id(map: "PK__TB_Rutas__4851E68B8B56B0A8") @default(autoincrement())
+  Codigo          String         @db.VarChar(13)
+  Nombres         String         @db.VarChar(70)
+  Sistema_Usuario String?        @db.VarChar(100)
+  Sistema_Fecha   DateTime?      @default(now(), map: "DF__TB_Rutas__Sistem__239E4DCF") @db.DateTime
+  TB_Vehiculos    TB_Vehiculos[]
+}
+
+model TB_Validaciones {
+  ID_Validacion   Int          @id(map: "PK__TB_Valid__CA1B27D5F80D4C1A") @default(autoincrement())
+  Lat             Decimal?     @db.Decimal(8, 6)
+  Lng             Decimal?     @db.Decimal(9, 6)
+  Url_Image       String?      @db.VarChar(Max)
+  Hora_Registro   DateTime     @db.Time
+  ID_Vehiculo     Int
+  Sistema_Usuario String?      @db.VarChar(100)
+  Sistema_Fecha   DateTime?    @default(now(), map: "DF__TB_Valida__Siste__2A4B4B5E") @db.DateTime
+  TB_Vehiculos    TB_Vehiculos @relation(fields: [ID_Vehiculo], references: [ID_Vehiculo], onUpdate: NoAction, map: "FK__TB_Valida__ID_Ve__2C3393D0")
+}
+
+model TB_Vehiculos {
+  ID_Vehiculo     Int               @id(map: "PK__TB_Vehic__FEFD7E3311B2D636") @default(autoincrement())
+  Registro_Unidad String            @db.VarChar(13)
+  Placa           String            @db.VarChar(13)
+  ID_Ruta         Int
+  Sistema_Usuario String?           @db.VarChar(100)
+  Sistema_Fecha   DateTime?         @default(now(), map: "DF__TB_Vehicu__Siste__267ABA7A") @db.DateTime
+  Temp_ID         String?           @db.VarChar(50)
+  TB_Validaciones TB_Validaciones[]
+  TB_Rutas        TB_Rutas          @relation(fields: [ID_Ruta], references: [ID_Ruta], onUpdate: NoAction, map: "FK__TB_Vehicu__ID_Ru__276EDEB3")
 }
