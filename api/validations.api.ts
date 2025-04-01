@@ -1,5 +1,5 @@
 import express from 'express';
-import { getValidations } from './queries';
+import { getRoutes, getValidations, getVehicles } from './queries';
 
 export const router = express.Router();
 
@@ -14,12 +14,17 @@ router.get('/validations', async (req, res) => {
   });
 });
 
-// router.get('/supplier/:id', async (req, res) => {
-//   getSupplier(req.params.id).then((data) => {
-//     res.json(data);
-//   });
-// });
+router.get('/vehicles', async (req, res) => {
+  getVehicles().then((data) => {
+    res.json(data);
+  });
+});
 
+router.get('/routes', async (req, res) => {
+  getRoutes().then((data) => {
+    res.json(data);
+  });
+});
 
 // Mutations
 // router.post('/create-product', async (req, res) => {

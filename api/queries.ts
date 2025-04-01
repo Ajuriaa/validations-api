@@ -26,3 +26,25 @@ export async function getVehicleByPlate(plate: string) {
     throw error;
   }
 }
+
+export async function getVehicles() {
+  try {
+    const data = await prisma.vehicle.findMany({
+      include: { route: true },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error retrieving vehicles', error);
+    throw error;
+  }
+}
+
+export async function getRoutes() {
+  try {
+    const data = await prisma.route.findMany();
+    return data;
+  } catch (error) {
+    console.error('Error retrieving routes', error);
+    throw error;
+  }
+}
