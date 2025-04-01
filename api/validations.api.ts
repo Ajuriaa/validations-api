@@ -1,4 +1,5 @@
 import express from 'express';
+import { getValidations } from './queries';
 
 export const router = express.Router();
 
@@ -7,11 +8,11 @@ router.use((req, res, next) => {
   next();
 });
 
-// router.get('/suppliers', async (req, res) => {
-//   getSuppliers().then((data) => {
-//     res.json(data);
-//   });
-// });
+router.get('/validations', async (req, res) => {
+  getValidations().then((data) => {
+    res.json(data);
+  });
+});
 
 // router.get('/supplier/:id', async (req, res) => {
 //   getSupplier(req.params.id).then((data) => {
