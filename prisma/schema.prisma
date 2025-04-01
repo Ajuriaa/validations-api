@@ -7,35 +7,41 @@ datasource db {
   url      = env("VALIDATIONS_DB_URL")
 }
 
-model TB_Rutas {
-  ID_Ruta         Int            @id(map: "PK__TB_Rutas__4851E68B8B56B0A8") @default(autoincrement())
-  Codigo          String         @db.VarChar(13)
-  Nombres         String         @db.VarChar(70)
-  Sistema_Usuario String?        @db.VarChar(100)
-  Sistema_Fecha   DateTime?      @default(now(), map: "DF__TB_Rutas__Sistem__239E4DCF") @db.DateTime
-  TB_Vehiculos    TB_Vehiculos[]
+model Route {
+  id              Int       @id(map: "PK__TB_Rutas__4851E68B8B56B0A8") @default(autoincrement()) @map("ID_Ruta")
+  code            String    @map("Codigo") @db.VarChar(13)
+  name            String    @map("Nombres") @db.VarChar(70)
+  systemUser      String?   @map("Sistema_Usuario") @db.VarChar(100)
+  systemDate      DateTime? @default(now(), map: "DF__TB_Rutas__Sistem__239E4DCF") @map("Sistema_Fecha") @db.DateTime
+  vehicles        Vehicle[]
+
+  @@map("TB_Rutas")
 }
 
-model TB_Validaciones {
-  ID_Validacion   Int          @id(map: "PK__TB_Valid__CA1B27D5F80D4C1A") @default(autoincrement())
-  Lat             Decimal?     @db.Decimal(8, 6)
-  Lng             Decimal?     @db.Decimal(9, 6)
-  Url_Image       String?      @db.VarChar(Max)
-  Hora_Registro   DateTime     @db.Time
-  ID_Vehiculo     Int
-  Sistema_Usuario String?      @db.VarChar(100)
-  Sistema_Fecha   DateTime?    @default(now(), map: "DF__TB_Valida__Siste__2A4B4B5E") @db.DateTime
-  TB_Vehiculos    TB_Vehiculos @relation(fields: [ID_Vehiculo], references: [ID_Vehiculo], onUpdate: NoAction, map: "FK__TB_Valida__ID_Ve__2C3393D0")
+model Validation {
+  id              Int       @id(map: "PK__TB_Valid__CA1B27D5F80D4C1A") @default(autoincrement()) @map("ID_Validacion")
+  latitude        Decimal?  @map("Lat") @db.Decimal(8, 6)
+  longitude       Decimal?  @map("Lng") @db.Decimal(9, 6)
+  imageUrl        String?   @map("Url_Image") @db.VarChar(Max)
+  registrationTime DateTime  @map("Hora_Registro") @db.Time
+  vehicleId       Int       @map("ID_Vehiculo")
+  systemUser      String?   @map("Sistema_Usuario") @db.VarChar(100)
+  systemDate      DateTime? @default(now(), map: "DF__TB_Valida__Siste__2A4B4B5E") @map("Sistema_Fecha") @db.DateTime
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onUpdate: NoAction, map: "FK__TB_Valida__ID_Ve__2C3393D0")
+
+  @@map("TB_Validaciones")
 }
 
-model TB_Vehiculos {
-  ID_Vehiculo     Int               @id(map: "PK__TB_Vehic__FEFD7E3311B2D636") @default(autoincrement())
-  Registro_Unidad String            @db.VarChar(13)
-  Placa           String            @db.VarChar(13)
-  ID_Ruta         Int
-  Sistema_Usuario String?           @db.VarChar(100)
-  Sistema_Fecha   DateTime?         @default(now(), map: "DF__TB_Vehicu__Siste__267ABA7A") @db.DateTime
-  Temp_ID         String?           @db.VarChar(50)
-  TB_Validaciones TB_Validaciones[]
-  TB_Rutas        TB_Rutas          @relation(fields: [ID_Ruta], references: [ID_Ruta], onUpdate: NoAction, map: "FK__TB_Vehicu__ID_Ru__276EDEB3")
+model Vehicle {
+  id              Int          @id(map: "PK__TB_Vehic__FEFD7E3311B2D636") @default(autoincrement()) @map("ID_Vehiculo")
+  unitRegister    String       @map("Registro_Unidad") @db.VarChar(13)
+  licensePlate    String       @map("Placa") @db.VarChar(13)
+  routeId         Int          @map("ID_Ruta")
+  systemUser      String?      @map("Sistema_Usuario") @db.VarChar(100)
+  systemDate      DateTime?    @default(now(), map: "DF__TB_Vehicu__Siste__267ABA7A") @map("Sistema_Fecha") @db.DateTime
+  tempId          String?      @map("Temp_ID") @db.VarChar(50)
+  validations     Validation[]
+  route           Route        @relation(fields: [routeId], references: [id], onUpdate: NoAction, map: "FK__TB_Vehicu__ID_Ru__276EDEB3")
+
+  @@map("TB_Vehiculos")
 }
