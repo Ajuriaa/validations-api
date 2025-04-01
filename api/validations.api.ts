@@ -9,7 +9,7 @@ router.use((req, res, next) => {
 });
 
 router.get('/validations', async (req, res) => {
-  getValidations().then((data) => {
+  getValidations(req.params).then((data) => {
     res.json(data);
   });
 });
