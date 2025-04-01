@@ -17,8 +17,8 @@ export async function getValidations(params: any) {
     const itemsPerPage = params.itemsPerPage ? parseInt(params.itemsPerPage) : 10;
 
     // Calculate pagination values
-    const skip = currentPage ? (currentPage - 1) * itemsPerPage : undefined;
-    const take = currentPage ? itemsPerPage : undefined;
+    const skip = (currentPage - 1) * itemsPerPage;
+    const take = itemsPerPage;
 
     // Parse and validate dates
     let startDate: Date | undefined;
@@ -64,14 +64,19 @@ export async function getValidations(params: any) {
     // Get total count for pagination info
     const totalCount = await prisma.validation.count({ where });
 
+    // Log pagination data for debugging
+    console.log('Data length:', data.length);
+    console.log('Total count:', totalCount);
+    console.log('Skip:', skip, 'Take:', take);
+
     return {
       data,
-      pagination: currentPage ? {
+      pagination: {
         currentPage,
         itemsPerPage,
         totalItems: totalCount,
         totalPages: Math.ceil(totalCount / itemsPerPage)
-      } : null
+      }
     };
   } catch (error) {
     console.error('Error retrieving validations', error);
