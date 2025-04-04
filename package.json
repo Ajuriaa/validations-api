@@ -5,7 +5,7 @@
   "scripts": {
     "generate": "bunx prisma generate",
     "lint": "bunx eslint . --fix",
-    "dev": "nodemon api.ts"
+    "dev": "bun run --watch api.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

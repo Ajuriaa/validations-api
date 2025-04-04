@@ -25,9 +25,13 @@ router.get('/vehicles', async (req, res) => {
 });
 
 router.get('/routes', async (req, res) => {
-  getRoutes().then((data) => {
+  try {
+    const data = await getRoutes(req.query);
     res.json(data);
-  });
+  } catch (error) {
+    console.error('Error in routes route:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Mutations

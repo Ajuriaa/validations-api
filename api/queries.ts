@@ -109,10 +109,55 @@ export async function getVehicles() {
   }
 }
 
-export async function getRoutes() {
+interface RouteQueryParams {
+  page?: string;
+  itemsPerPage?: string;
+  search?: string;
+  [key: string]: string | undefined;
+}
+
+export async function getRoutes(params: any = {}) {
   try {
-    const data = await prisma.route.findMany();
-    return data;
+    console.log('Received route params:', params);
+
+    // Parse pagination parameters
+    const currentPage = params.page ? parseInt(params.page) : 1;
+    const itemsPerPage = params.itemsPerPage ? parseInt(params.itemsPerPage) : 10;
+
+    // Calculate pagination values
+    const skip = (currentPage - 1) * itemsPerPage;
+    const take = itemsPerPage;
+
+    // Build where clause for search filtering
+    const where: any = {};
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search } },
+        { code: { contains: params.search } }
+      ];
+    }
+
+    // Get paginated routes
+    const data = await prisma.route.findMany({
+      where,
+      skip,
+      take,
+      include: { vehicles: true },
+      orderBy: { name: 'asc' }
+    });
+
+    // Get total count for pagination info
+    const totalCount = await prisma.route.count({ where });
+
+    return {
+      data,
+      pagination: {
+        currentPage,
+        itemsPerPage,
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / itemsPerPage)
+      }
+    };
   } catch (error) {
     console.error('Error retrieving routes', error);
     throw error;
