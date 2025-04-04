@@ -5,8 +5,7 @@ const prisma = new PrismaClient();
 interface ValidationQueryParams {
   page?: string;
   itemsPerPage?: string;
-  startDate?: string;
-  endDate?: string;
+  date?: string;
   [key: string]: string | undefined;
 }
 
@@ -20,36 +19,39 @@ export async function getValidations(params: any) {
     const skip = (currentPage - 1) * itemsPerPage;
     const take = itemsPerPage;
 
-    // Parse and validate dates
-    let startDate: Date | undefined;
-    let endDate: Date | undefined;
-
-    if (params.startDate) {
-      startDate = new Date(params.startDate);
-      if (isNaN(startDate.getTime())) {
-        throw new Error('Invalid startDate format. Use ISO format (YYYY-MM-DD)');
-      }
-    }
-
-    if (params.endDate) {
-      endDate = new Date(params.endDate);
-      if (isNaN(endDate.getTime())) {
-        throw new Error('Invalid endDate format. Use ISO format (YYYY-MM-DD)');
-      }
-    }
-
-    // Build where clause for date filtering
+    // Build where clause for filtering
     const where: any = {};
-    if (startDate || endDate) {
-      where.systemDate = {};
 
-      if (startDate) {
-        where.systemDate.gte = startDate;
+    // Date filtering
+    if (params.date) {
+      const selectedDate = new Date(params.date);
+      console.log('Selected date:', selectedDate);
+
+      if (isNaN(selectedDate.getTime())) {
+        throw new Error('Invalid date format. Use ISO format (YYYY-MM-DD)');
       }
 
-      if (endDate) {
-        where.systemDate.lte = endDate;
-      }
+      // Create start of day and end of day times for the selected date
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      where.systemDate = {
+        gte: startOfDay,
+        lte: endOfDay
+      };
+    }
+
+    // Search filtering
+    if (params.search) {
+      where.OR = [
+        { vehicle: { licensePlate: { contains: params.search } } },
+        { vehicle: { unitRegister: { contains: params.search } } },
+        { vehicle: { route: { name: { contains: params.search } } } },
+        { vehicle: { route: { code: { contains: params.search } } } }
+      ];
     }
 
     // Get paginated validations

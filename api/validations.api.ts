@@ -1,6 +1,6 @@
 import express from 'express';
 import { getRoutes, getValidations, getVehicles } from './queries';
-import { createVehicle } from './mutations';
+import { createVehicle, updateVehicle } from './mutations';
 
 export const router = express.Router();
 
@@ -41,7 +41,17 @@ router.get('/routes', async (req, res) => {
 
 // Mutations
 router.post('/create-vehicle', async (req, res) => {
-  createVehicle(req.body).then((data) => {
+  try {
+    const data = await createVehicle(req.body);
+    res.json(data);
+  } catch (error) {
+    console.error('Error creating vehicle:', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
+  }
+});
+
+router.post('/update-vehicle', async (req, res) => {
+  updateVehicle(req.body.id, req.body.data).then((data) => {
     res.json(data);
   });
 });
