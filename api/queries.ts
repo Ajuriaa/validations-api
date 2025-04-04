@@ -107,22 +107,31 @@ export async function getVehicles(params: any = {}) {
     // Calculate pagination values
     const skip = (currentPage - 1) * itemsPerPage;
     const take = itemsPerPage;
-    
+
     // Build where clause for filtering
     const where: any = {};
-    
+
     if (params.plate) {
       where.licensePlate = params.plate;
     }
-    
+
     if (params.unitRegister) {
       where.unitRegister = params.unitRegister;
     }
-    
+
     if (params.routeId) {
       where.routeId = parseInt(params.routeId);
     }
-    
+
+    if (params.search) {
+      where.OR = [
+        { licensePlate: { contains: params.search } },
+        { unitRegister: { contains: params.search } },
+        { route: { name: { contains: params.search } } },
+        { route: { code: { contains: params.search } } }
+      ];
+    }
+
     // Get paginated vehicles
     const data = await prisma.vehicle.findMany({
       where,
@@ -131,10 +140,10 @@ export async function getVehicles(params: any = {}) {
       include: { route: true },
       orderBy: { unitRegister: 'asc' }
     });
-    
+
     // Get total count for pagination info
     const totalCount = await prisma.vehicle.count({ where });
-    
+
     return {
       data,
       pagination: {
