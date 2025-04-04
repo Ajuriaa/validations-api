@@ -84,6 +84,7 @@ export async function getValidations(params: any) {
   }
 }
 
+
 export async function getVehicleByPlate(plate: string) {
   try {
     const data = await prisma.vehicle.findFirst({
@@ -97,12 +98,52 @@ export async function getVehicleByPlate(plate: string) {
   }
 }
 
-export async function getVehicles() {
+export async function getVehicles(params: any = {}) {
   try {
+    // Parse pagination parameters
+    const currentPage = params.page ? parseInt(params.page) : 1;
+    const itemsPerPage = params.itemsPerPage ? parseInt(params.itemsPerPage) : 10;
+
+    // Calculate pagination values
+    const skip = (currentPage - 1) * itemsPerPage;
+    const take = itemsPerPage;
+    
+    // Build where clause for filtering
+    const where: any = {};
+    
+    if (params.plate) {
+      where.licensePlate = params.plate;
+    }
+    
+    if (params.unitRegister) {
+      where.unitRegister = params.unitRegister;
+    }
+    
+    if (params.routeId) {
+      where.routeId = parseInt(params.routeId);
+    }
+    
+    // Get paginated vehicles
     const data = await prisma.vehicle.findMany({
+      where,
+      skip,
+      take,
       include: { route: true },
+      orderBy: { unitRegister: 'asc' }
     });
-    return data;
+    
+    // Get total count for pagination info
+    const totalCount = await prisma.vehicle.count({ where });
+    
+    return {
+      data,
+      pagination: {
+        currentPage,
+        itemsPerPage,
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / itemsPerPage)
+      }
+    };
   } catch (error) {
     console.error('Error retrieving vehicles', error);
     throw error;

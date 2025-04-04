@@ -1,5 +1,6 @@
 import express from 'express';
 import { getRoutes, getValidations, getVehicles } from './queries';
+import { createVehicle } from './mutations';
 
 export const router = express.Router();
 
@@ -19,9 +20,13 @@ router.get('/validations', async (req, res) => {
 });
 
 router.get('/vehicles', async (req, res) => {
-  getVehicles().then((data) => {
+  try {
+    const data = await getVehicles(req.query);
     res.json(data);
-  });
+  } catch (error) {
+    console.error('Error in vehicles route:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.get('/routes', async (req, res) => {
@@ -35,9 +40,9 @@ router.get('/routes', async (req, res) => {
 });
 
 // Mutations
-// router.post('/create-product', async (req, res) => {
-//   createProduct(req.body).then((data) => {
-//     res.json(data);
-//   });
-// });
+router.post('/create-vehicle', async (req, res) => {
+  createVehicle(req.body).then((data) => {
+    res.json(data);
+  });
+});
 
