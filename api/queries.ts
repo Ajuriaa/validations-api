@@ -24,23 +24,17 @@ export async function getValidations(params: any) {
 
     // Date filtering
     if (params.date) {
-      const selectedDate = new Date(params.date);
-      console.log('Selected date:', selectedDate);
+      // Fuerza la fecha a ser interpretada como UTC
+      const [year, month, day] = params.date.split('-').map(Number);
+      const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+      const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
-      if (isNaN(selectedDate.getTime())) {
-        throw new Error('Invalid date format. Use ISO format (YYYY-MM-DD)');
-      }
-
-      // Create start of day and end of day times for the selected date
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      console.log('Start of day UTC:', startOfDay.toISOString());
+      console.log('End of day UTC:', endOfDay.toISOString());
 
       where.systemDate = {
-        gte: startOfDay,
-        lte: endOfDay
+        gte: startOfDay.toISOString(),
+        lte: endOfDay.toISOString()
       };
     }
 
