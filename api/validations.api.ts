@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs';
 export const router = express.Router();
 
 router.use((req, res, next) => {
-  console.log('supply system middleware');
+  console.log('validation system middleware');
   next();
 });
 

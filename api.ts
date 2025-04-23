@@ -18,7 +18,7 @@ const httpsOptions = {
   cert: fs.readFileSync(process.env.SSL_CERT_PATH || '')
 };
 
-const port = 5700;
+const port = 5702;
 
 https.createServer(httpsOptions, app).listen(port, () => {
   console.log(`El api de validaciones está corriendo en el puerto ${port}`);
