@@ -1,0 +1,22 @@
+{
+  "rutas": {
+    "completed": true,
+    "count": 40,
+    "total": 40,
+    "lastProcessedId": "RU63"
+  },
+  "vehiculos": {
+    "completed": true,
+    "count": 1461,
+    "total": 1461,
+    "lastProcessedId": "ffd4fcf4-f3b4-4c0f-8881-8d6f2cc05ecd"
+  },
+  "validaciones": {
+    "completed": false,
+    "count": 1000,
+    "total": 83056,
+    "batchSize": 1000,
+    "currentBatch": 1,
+    "lastProcessedId": "031203a7-1ea2-43be-bc27-a5ebfdd58798"
+  }
+}
