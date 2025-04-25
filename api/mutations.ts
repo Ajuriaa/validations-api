@@ -110,7 +110,8 @@ export async function createValidation(validationData: CreateValidationInput) {
         registrationTime: new Date(),
         latitude: validationData.latitude,
         longitude: validationData.longitude,
-        systemDate: new Date()
+        systemDate: new Date(),
+        systemUser: 'API'
       },
       include: { vehicle: { include: { route: true } } }
     });
@@ -119,7 +120,7 @@ export async function createValidation(validationData: CreateValidationInput) {
     if (validationData.base64FileFoto) {
       // Use the relative files path
       const filesDir = '../files';
-      
+
       // Create directory if it doesn't exist
       if (!fs.existsSync(filesDir)) {
         fs.mkdirSync(filesDir, { recursive: true });
@@ -127,24 +128,24 @@ export async function createValidation(validationData: CreateValidationInput) {
 
       // Extract the image data and determine file extension
       const matches = validationData.base64FileFoto.match(/^data:image\/([A-Za-z]+);base64,(.+)$/);
-      
+
       if (matches && matches.length === 3) {
         const extension = matches[1].toLowerCase();
         const imageData = matches[2];
         const filename = `${validation.id}.${extension}`;
         const filePath = path.join(filesDir, filename);
-        
+
         // Write file
         fs.writeFileSync(filePath, Buffer.from(imageData, 'base64'));
-        
+
         // Update validation with image URL
         const imageUrl = `https://satt.transporte.gob.hn:298/files/${filename}`;
-        
+
         await prisma.validation.update({
           where: { id: validation.id },
           data: { imageUrl }
         });
-        
+
         validation.imageUrl = imageUrl;
       }
     }
