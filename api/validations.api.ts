@@ -1,6 +1,6 @@
 import express from 'express';
-import { getRoutes, getValidations, getVehicles } from './queries';
-import { createVehicle, updateVehicle } from './mutations';
+import { getRouteByCode, getRoutes, getValidations, getVehicles } from './queries';
+import { createVehicle, createValidation, updateVehicle } from './mutations';
 import ExcelJS from 'exceljs';
 
 export const router = express.Router();
@@ -40,6 +40,19 @@ router.get('/routes', async (req, res) => {
   }
 });
 
+router.get('/route/:code', async (req: any, res: any) => {
+  try {
+    const data = await getRouteByCode(req.params.code);
+    if (!data) {
+      return res.status(404).json({ error: 'Route not found' });
+    }
+    res.json(data);
+  } catch (error) {
+    console.error('Error in route by code route:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Mutations
 router.post('/create-vehicle', async (req, res) => {
   try {
@@ -55,6 +68,16 @@ router.post('/update-vehicle', async (req, res) => {
   updateVehicle(req.body.id, req.body.data).then((data) => {
     res.json(data);
   });
+});
+
+router.post('/validation', async (req, res) => {
+  try {
+    const data = await createValidation(req.body);
+    res.json(data);
+  } catch (error) {
+    console.error('Error creating validation:', error);
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Internal server error' });
+  }
 });
 
 router.get('/reports', async (req, res) => {

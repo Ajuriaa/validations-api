@@ -162,6 +162,19 @@ interface RouteQueryParams {
   [key: string]: string | undefined;
 }
 
+export async function getRouteByCode(code: string) {
+  try {
+    const data = await prisma.vehicle.findFirst({
+      where: { unitRegister: code },
+      include: { route: true },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error retrieving route', error);
+    throw error;
+  }
+}
+
 export async function getRoutes(params: any = {}) {
   try {
     console.log('Received route params:', params);
