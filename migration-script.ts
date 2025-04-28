@@ -46,9 +46,9 @@ interface MigrationProgress {
 const defaultProgress: MigrationProgress = {
   rutas: { completed: false, count: 0, total: 0 },
   vehiculos: { completed: false, count: 0, total: 0 },
-  validaciones: { 
-    completed: false, 
-    count: 0, 
+  validaciones: {
+    completed: false,
+    count: 0,
     total: 0,
     batchSize: 1000, // Process 1000 records at a time
     currentBatch: 0
@@ -95,15 +95,15 @@ async function migrate() {
     const countResult = await pgClient.query('SELECT COUNT(*) FROM rutas');
     progress.rutas.total = parseInt(countResult.rows[0].count);
     saveProgress(progress);
-    
+
     let query = 'SELECT id, nombres FROM rutas';
     if (progress.rutas.lastProcessedId) {
       query += ` WHERE id > '${progress.rutas.lastProcessedId}'`;
     }
     query += ' ORDER BY id';
-    
+
     const rutasResult = await pgClient.query(query);
-    
+
     for (const row of rutasResult.rows) {
       try {
         await sqlPool.request()
@@ -115,10 +115,10 @@ async function migrate() {
             INSERT INTO TB_Rutas (Codigo, Nombres, Sistema_Usuario)
             VALUES (@Codigo, @Nombres, @Sistema_Usuario)
           `);
-        
+
         progress.rutas.lastProcessedId = row.id;
         progress.rutas.count++;
-        
+
         if (progress.rutas.count % 100 === 0) {
           logProgress('Rutas', progress.rutas.count, progress.rutas.total);
           saveProgress(progress);
@@ -129,7 +129,7 @@ async function migrate() {
         throw err;
       }
     }
-    
+
     progress.rutas.completed = true;
     saveProgress(progress);
     console.log('Migración de rutas completada.');
@@ -140,15 +140,15 @@ async function migrate() {
     const countResult = await pgClient.query('SELECT COUNT(*) FROM vehiculos');
     progress.vehiculos.total = parseInt(countResult.rows[0].count);
     saveProgress(progress);
-    
+
     let query = 'SELECT id, registro_unidad, placa, id_ruta FROM vehiculos';
     if (progress.vehiculos.lastProcessedId) {
       query += ` WHERE id > ${progress.vehiculos.lastProcessedId}`;
     }
     query += ' ORDER BY id';
-    
+
     const vehiculosResult = await pgClient.query(query);
-    
+
     for (const row of vehiculosResult.rows) {
       try {
         const rutaResult = await sqlPool.request()
@@ -160,7 +160,7 @@ async function migrate() {
           progress.vehiculos.count++;
           continue;
         }
-        
+
         const ID_Ruta = rutaResult.recordset[0].ID_Ruta;
 
         await sqlPool.request()
@@ -174,10 +174,10 @@ async function migrate() {
             INSERT INTO TB_Vehiculos (Registro_Unidad, Placa, ID_Ruta, Temp_ID, Sistema_Usuario)
             VALUES (@Registro_Unidad, @Placa, @ID_Ruta, @Temp_ID, @Sistema_Usuario)
           `);
-        
+
         progress.vehiculos.lastProcessedId = row.id;
         progress.vehiculos.count++;
-        
+
         if (progress.vehiculos.count % 100 === 0) {
           logProgress('Vehiculos', progress.vehiculos.count, progress.vehiculos.total);
           saveProgress(progress);
@@ -188,106 +188,91 @@ async function migrate() {
         throw err;
       }
     }
-    
+
     progress.vehiculos.completed = true;
     saveProgress(progress);
     console.log('Migración de vehiculos completada.');
   }
 
   // === Migrar Validaciones ===
-  if (!progress.validaciones.completed) {
-    const countResult = await pgClient.query('SELECT COUNT(*) FROM validaciones WHERE id_vehicle IS NOT NULL');
-    progress.validaciones.total = parseInt(countResult.rows[0].count);
-    saveProgress(progress);
+ // === Migrar Validaciones ===
+if (!progress.validaciones.completed) {
+  const countResult = await pgClient.query('SELECT COUNT(*) FROM validaciones WHERE id_vehicle IS NOT NULL');
+  progress.validaciones.total = parseInt(countResult.rows[0].count);
+  saveProgress(progress);
 
-    // Process validaciones in batches to avoid memory issues
-    const batchSize = progress.validaciones.batchSize;
-    let currentBatch = progress.validaciones.currentBatch;
-    let batchCompleted = false;
-    
-    while (!batchCompleted) {
-      let query = `
-        SELECT id, lat, lng, url_image, hora_registro, id_vehicle
-        FROM validaciones
-        WHERE id_vehicle IS NOT NULL
-      `;
-      
-      if (progress.validaciones.lastProcessedId) {
-        query += ` AND id > ${progress.validaciones.lastProcessedId}`;
-      }
-      
-      query += ` ORDER BY id LIMIT ${batchSize} OFFSET ${currentBatch * batchSize}`;
-      
-      const validacionesResult = await pgClient.query(query);
-      
-      if (validacionesResult.rows.length === 0) {
-        batchCompleted = true;
-        progress.validaciones.completed = true;
-        saveProgress(progress);
-        break;
-      }
-      
-      for (const row of validacionesResult.rows) {
-        try {
-          const vehiculoResult = await sqlPool.request()
-            .input('Temp_ID', row.id_vehicle)
-            .query('SELECT ID_Vehiculo FROM TB_Vehiculos WHERE Temp_ID = @Temp_ID');
+  const batchSize = progress.validaciones.batchSize;
 
-          if (vehiculoResult.recordset.length === 0) {
-            progress.validaciones.lastProcessedId = row.id;
-            progress.validaciones.count++;
-            continue;
-          }
-          
-          const ID_Vehiculo = vehiculoResult.recordset[0].ID_Vehiculo;
+  while (true) {
+    let query = `
+      SELECT id, lat, lng, url_image, hora_registro, id_vehicle
+      FROM validaciones
+      WHERE id_vehicle IS NOT NULL
+      ORDER BY id
+      LIMIT ${batchSize} OFFSET ${progress.validaciones.count}
+    `;
 
-          await sqlPool.request()
-            .input('Lat', row.lat)
-            .input('Lng', row.lng)
-            .input('Url_Image', row.url_image)
-            .input('Hora_Registro', row.hora_registro)
-            .input('ID_Vehiculo', ID_Vehiculo)
-            .input('Sistema_Usuario', 'migracion')
-            .query(`
-              IF NOT EXISTS (SELECT 1 FROM TB_Validaciones 
-                            WHERE Lat = @Lat AND Lng = @Lng 
-                            AND Hora_Registro = @Hora_Registro 
-                            AND ID_Vehiculo = @ID_Vehiculo)
-              INSERT INTO TB_Validaciones (Lat, Lng, Url_Image, Hora_Registro, ID_Vehiculo, Sistema_Usuario)
-              VALUES (@Lat, @Lng, @Url_Image, @Hora_Registro, @ID_Vehiculo, @Sistema_Usuario)
-            `);
-          
-          progress.validaciones.lastProcessedId = row.id;
-          progress.validaciones.count++;
-          
-          if (progress.validaciones.count % 100 === 0) {
-            logProgress('Validaciones', progress.validaciones.count, progress.validaciones.total);
-            saveProgress(progress);
-          }
-        } catch (err) {
-          console.error(`Error migrating validacion ${row.id}:`, err);
-          saveProgress(progress);
-          throw err;
-        }
-      }
-      
-      currentBatch++;
-      progress.validaciones.currentBatch = currentBatch;
+    const validacionesResult = await pgClient.query(query);
+
+    if (validacionesResult.rows.length === 0) {
+      progress.validaciones.completed = true;
       saveProgress(progress);
-      
-      logProgress('Validaciones', progress.validaciones.count, progress.validaciones.total);
-      console.log(`Completado lote ${currentBatch} de validaciones`);
+      console.log('Migración de validaciones completada.');
+      break;
     }
-    
-    progress.validaciones.completed = true;
+
+    for (const row of validacionesResult.rows) {
+      try {
+        const vehiculoResult = await sqlPool.request()
+          .input('Temp_ID', row.id_vehicle)
+          .query('SELECT ID_Vehiculo FROM TB_Vehiculos WHERE Temp_ID = @Temp_ID');
+
+        if (vehiculoResult.recordset.length === 0) {
+          progress.validaciones.count++;
+          continue;
+        }
+
+        const ID_Vehiculo = vehiculoResult.recordset[0].ID_Vehiculo;
+
+        await sqlPool.request()
+          .input('Lat', row.lat)
+          .input('Lng', row.lng)
+          .input('Url_Image', row.url_image)
+          .input('Hora_Registro', row.hora_registro)
+          .input('ID_Vehiculo', ID_Vehiculo)
+          .input('Sistema_Usuario', 'migracion')
+          .query(`
+            IF NOT EXISTS (SELECT 1 FROM TB_Validaciones
+                          WHERE Lat = @Lat AND Lng = @Lng
+                          AND Hora_Registro = @Hora_Registro
+                          AND ID_Vehiculo = @ID_Vehiculo)
+            INSERT INTO TB_Validaciones (Lat, Lng, Url_Image, Hora_Registro, ID_Vehiculo, Sistema_Usuario)
+            VALUES (@Lat, @Lng, @Url_Image, @Hora_Registro, @ID_Vehiculo, @Sistema_Usuario)
+          `);
+
+        progress.validaciones.count++;
+
+        if (progress.validaciones.count % 100 === 0) {
+          logProgress('Validaciones', progress.validaciones.count, progress.validaciones.total);
+          saveProgress(progress);
+        }
+      } catch (err) {
+        console.error(`Error migrating validacion ${row.id}:`, err);
+        saveProgress(progress);
+        throw err;
+      }
+    }
+
     saveProgress(progress);
-    console.log('Migración de validaciones completada.');
+    logProgress('Validaciones', progress.validaciones.count, progress.validaciones.total);
   }
+}
+
 
   console.log('Migración completada con éxito.');
   await pgClient.end();
   await sqlPool.close();
-  
+
   // Rename progress file once migration is complete
   try {
     if (fs.existsSync(LOG_FILE)) {
