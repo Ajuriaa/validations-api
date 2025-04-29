@@ -12,11 +12,10 @@
     "lastProcessedId": "ffd4fcf4-f3b4-4c0f-8881-8d6f2cc05ecd"
   },
   "validaciones": {
-    "completed": false,
-    "count": 28500,
-    "total": 83167,
+    "completed": true,
+    "count": 83170,
+    "total": 83170,
     "batchSize": 1000,
-    "currentBatch": 12,
-    "lastProcessedId": "ffff476f-df0c-49d3-bf4d-8f912c9d179b"
+    "currentBatch": 0
   }
 }

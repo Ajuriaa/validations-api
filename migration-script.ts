@@ -205,7 +205,7 @@ if (!progress.validaciones.completed) {
 
   while (true) {
     let query = `
-      SELECT id, lat, lng, url_image, hora_registro, id_vehicle
+      SELECT id, lat, lng, url_image, hora_registro, id_vehicle, creation_date
       FROM validaciones
       WHERE id_vehicle IS NOT NULL
       ORDER BY id
@@ -240,14 +240,15 @@ if (!progress.validaciones.completed) {
           .input('Url_Image', row.url_image)
           .input('Hora_Registro', row.hora_registro)
           .input('ID_Vehiculo', ID_Vehiculo)
+          .input('Sistema_Fecha', row.creation_date)
           .input('Sistema_Usuario', 'migracion')
           .query(`
             IF NOT EXISTS (SELECT 1 FROM TB_Validaciones
                           WHERE Lat = @Lat AND Lng = @Lng
                           AND Hora_Registro = @Hora_Registro
                           AND ID_Vehiculo = @ID_Vehiculo)
-            INSERT INTO TB_Validaciones (Lat, Lng, Url_Image, Hora_Registro, ID_Vehiculo, Sistema_Usuario)
-            VALUES (@Lat, @Lng, @Url_Image, @Hora_Registro, @ID_Vehiculo, @Sistema_Usuario)
+            INSERT INTO TB_Validaciones (Lat, Lng, Url_Image, Hora_Registro, ID_Vehiculo, Sistema_Usuario, Sistema_Fecha)
+            VALUES (@Lat, @Lng, @Url_Image, @Hora_Registro, @ID_Vehiculo, @Sistema_Usuario, @Sistema_Fecha)
           `);
 
         progress.validaciones.count++;
