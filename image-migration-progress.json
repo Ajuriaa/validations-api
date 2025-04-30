@@ -1,0 +1,13 @@
+{
+  "images": {
+    "completed": false,
+    "total": 83165,
+    "processed": 0,
+    "successful": 0,
+    "failed": 0,
+    "lastProcessedId": 0,
+    "batchSize": 100,
+    "startTime": "2025-04-29T21:49:08.627Z",
+    "lastUpdateTime": "2025-04-29T21:49:09.498Z"
+  }
+}
