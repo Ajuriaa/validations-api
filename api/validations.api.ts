@@ -1,5 +1,5 @@
 import express from 'express';
-import { getRouteByCode, getRoutes, getValidations, getVehicles } from './queries';
+import { getRouteByCode, getRoutes, getValidations, getVehicleByCode, getVehicles } from './queries';
 import { createVehicle, createValidation, updateVehicle } from './mutations';
 import ExcelJS from 'exceljs';
 
@@ -26,6 +26,20 @@ router.get('/vehicles', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Error in vehicles route:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/vehicle/:code', async (req: any, res: any) => {
+  try {
+    const data = await getVehicleByCode(req.params.code);
+    if (!data) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in vehicle by code route:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

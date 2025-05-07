@@ -94,6 +94,19 @@ export async function getVehicleByPlate(plate: string) {
   }
 }
 
+export async function getVehicleByCode(code: string) {
+  try {
+    const data = await prisma.vehicle.findFirst({
+      where: { unitRegister: code },
+      include: { route: true },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error retrieving vehicle by code', error);
+    throw error;
+  }
+}
+
 export async function getVehicles(params: any = {}) {
   try {
     // Parse pagination parameters
