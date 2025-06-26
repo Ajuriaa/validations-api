@@ -89,6 +89,7 @@ interface CreateValidationInput {
   base64FileFoto?: string;
   latitude?: number;
   longitude?: number;
+  systemUser?: string;
 }
 
 export async function createValidation(validationData: CreateValidationInput) {
@@ -111,7 +112,7 @@ export async function createValidation(validationData: CreateValidationInput) {
         latitude: validationData.latitude,
         longitude: validationData.longitude,
         systemDate: new Date(),
-        systemUser: 'API'
+        systemUser: validationData.systemUser
       },
       include: { vehicle: { include: { route: true } } }
     });

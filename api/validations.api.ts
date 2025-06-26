@@ -6,7 +6,6 @@ import ExcelJS from 'exceljs';
 export const router = express.Router();
 
 router.use((req, res, next) => {
-  console.log('validation system middleware');
   next();
 });
 
@@ -202,4 +201,85 @@ router.get('/reports', async (req, res) => {
     res.status(500).json({ error: 'Error al generar el reporte' });
   }
 });
+
+router.get('/auth', async (req: any, res: any) => {
+  try {
+    const { username, password } = req.query;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username and password are required'
+      });
+    }
+
+    // External API configuration
+    const API_URL = 'https://satt.transporte.gob.hn/api_login.php';
+    const APP_ID = '89b473b3ea9d5b6719c8ee8ce0c247d5';
+    const MODULE_NUMBER = 66;
+    const ACTION = 'do-login-web';
+
+    // Prepare FormData for external API
+    const formData = new FormData();
+    formData.append('appid', APP_ID);
+    formData.append('action', ACTION);
+    formData.append('modulo', MODULE_NUMBER.toString());
+    formData.append('nombre', username as string);
+    formData.append('password', password as string);
+
+    // Make request to external API
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    // Validate response
+    if (!data || data.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Respuesta inválida del servidor'
+      });
+    }
+
+    if (data[0].result !== 1) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciales incorrectas'
+      });
+    }
+
+    const token = data[1].session_key;
+
+    // Check if user is admin
+    const isAdmin = checkAdminRole(data[1].roles, MODULE_NUMBER);
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tiene permisos para acceder al sistema'
+      });
+    }
+
+    // Return success response
+    res.json({
+      success: true,
+      token,
+      user: data[1].perfil?.Nombre || username
+    });
+
+  } catch (error) {
+    console.error('Error in auth route:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+});
+
+// Helper function to check admin role
+function checkAdminRole(roles: { modulo: string, rol: string }[], moduleNumber: number): boolean {
+  const userRole = roles.find(role => +role.modulo === moduleNumber);
+  return userRole ? +userRole.rol === 12 : false;
+}
 
